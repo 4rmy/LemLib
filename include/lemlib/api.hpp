@@ -1,4 +1,4 @@
-#pragma once
+#pragma keep
 
 #include "lemlib/util.hpp"
 #include "lemlib/pid.hpp"
