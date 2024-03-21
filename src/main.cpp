@@ -1,7 +1,9 @@
 #include "main.h"
 #include "lemlib/api.hpp"
 #include "lemlib/asset.hpp"
+#include "lemlib/chassis/chassis.hpp"
 #include "lemlib/chassis/trackingWheel.hpp"
+#include "lemlib/pose.hpp"
 #include "pros/motors.hpp"
 
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
@@ -10,26 +12,17 @@ pros::MotorGroup leftMotors({
     12,
     13,
 });
-pros::MotorGroup rightMotors({
-    -18,
-    -19,
-    -20
-});
+pros::MotorGroup rightMotors({-18, -19, -20});
 pros::Imu imu(17);
 pros::Rotation horizontalEnc(15, true);
-lemlib::TrackingWheel horizontal(
-    &horizontalEnc,
-    lemlib::Omniwheel::NEW_275,
-    -3.7
-);
+lemlib::TrackingWheel horizontal(&horizontalEnc, lemlib::Omniwheel::NEW_275, -3.7);
 
-lemlib::Drivetrain drivetrain(
-    &leftMotors, // left motor group
-    &rightMotors, // right motor group
-    10, // 10 inch track width
-    2.75, // using new 2.75" omnis
-    600, // drivetrain rpm is 360
-    2 // chase power is 2. If we had traction wheels, it would have been 8
+lemlib::Drivetrain drivetrain(&leftMotors, // left motor group
+                              &rightMotors, // right motor group
+                              9.75, // 10 inch track width
+                              2.75, // using new 2.75" omnis
+                              600, // drivetrain rpm is 360
+                              2 // chase power is 2. If we had traction wheels, it would have been 8
 );
 lemlib::ControllerSettings linearController(
     10, // proportional gain (kP)
@@ -43,7 +36,7 @@ lemlib::ControllerSettings linearController(
     20 // maximum acceleration (slew)
 );
 lemlib::ControllerSettings angularController(
-    5, // proportional gain (kP)
+    2, // proportional gain (kP)
     0, // integral gain (kI)
     10, // derivative gain (kD)
     3, // anti windup
@@ -53,19 +46,13 @@ lemlib::ControllerSettings angularController(
     500, // large error range timeout, in milliseconds
     0 // maximum acceleration (slew)
 );
-lemlib::OdomSensors sensors(
-    nullptr, // vertical tracking wheel 1, set to null
-    nullptr, // vertical tracking wheel 2, set to nullptr as we are using IMEs
-    nullptr, // horizontal tracking wheel 1
-    nullptr, // horizontal tracking wheel 2, set to nullptr as we don't have a second one
-    &imu // inertial sensor
+lemlib::OdomSensors sensors(nullptr, // vertical tracking wheel 1, set to null
+                            nullptr, // vertical tracking wheel 2, set to nullptr as we are using IMEs
+                            nullptr, // horizontal tracking wheel 1
+                            nullptr, // horizontal tracking wheel 2, set to nullptr as we don't have a second one
+                            &imu // inertial sensor
 );
-lemlib::Chassis chassis(
-    drivetrain,
-    linearController,
-    angularController,
-    sensors
-);
+lemlib::Chassis chassis(drivetrain, linearController, angularController, sensors);
 
 void initialize() {
     pros::lcd::initialize(); // initialize brain screen
@@ -99,21 +86,17 @@ void disabled() {}
 
 void competition_initialize() {}
 
-pros::Motor intake (3);
+pros::Motor intake(3);
 
-ASSET(farRush_txt)
+ASSET(test_txt)
 
 void autonomous() {
-    /*
-    chassis.moveToPose(0, 24, 0, 4000);
     intake = 127;
-    chassis.moveToPose(-12, 54, 180, 4000);
-    chassis.moveToPose(0, 24, 180, 4000);
+    chassis.moveToPose(-26.984, 55.758, 315, 5000, {.maxSpeed = 127, .minSpeed = 80}, false);
+    chassis.moveToPose(8.623, 60, 270, 5000, {.forwards = false, .maxSpeed = 127, .minSpeed = 80}, false);
     intake = 0;
-    */
-
-    chassis.follow(farRush_txt, 14, 2000);
-    chassis.waitUntilDone();
+    chassis.moveToPose(-13, 27.5, 180, 5000, {.maxSpeed = 127, .minSpeed = 80}, false);
+    chassis.moveToPose(0, 0, 0, 5000, {.forwards = false, .maxSpeed = 127, .minSpeed = 80}, false);
 }
 
 void opcontrol() {
