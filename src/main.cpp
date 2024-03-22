@@ -4,6 +4,7 @@
 #include "lemlib/chassis/chassis.hpp"
 #include "lemlib/chassis/trackingWheel.hpp"
 #include "lemlib/pose.hpp"
+#include "pros/motors.h"
 #include "pros/motors.hpp"
 
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
@@ -17,12 +18,13 @@ pros::Imu imu(17);
 pros::Rotation horizontalEnc(15, true);
 lemlib::TrackingWheel horizontal(&horizontalEnc, lemlib::Omniwheel::NEW_275, -3.7);
 
-lemlib::Drivetrain drivetrain(&leftMotors, // left motor group
-                              &rightMotors, // right motor group
-                              9.75, // 10 inch track width
-                              2.75, // using new 2.75" omnis
-                              600, // drivetrain rpm is 360
-                              2 // chase power is 2. If we had traction wheels, it would have been 8
+lemlib::Drivetrain drivetrain(
+    &leftMotors, // left motor group
+    &rightMotors, // right motor group
+    9.75, // 10 inch track width
+    2.75, // using new 2.75" omnis
+    600, // drivetrain rpm is 360
+    2 // chase power is 2. If we had traction wheels, it would have been 8
 );
 lemlib::ControllerSettings linearController(
     10, // proportional gain (kP)
@@ -46,11 +48,12 @@ lemlib::ControllerSettings angularController(
     500, // large error range timeout, in milliseconds
     0 // maximum acceleration (slew)
 );
-lemlib::OdomSensors sensors(nullptr, // vertical tracking wheel 1, set to null
-                            nullptr, // vertical tracking wheel 2, set to nullptr as we are using IMEs
-                            nullptr, // horizontal tracking wheel 1
-                            nullptr, // horizontal tracking wheel 2, set to nullptr as we don't have a second one
-                            &imu // inertial sensor
+lemlib::OdomSensors sensors(
+    nullptr, // vertical tracking wheel 1, set to null
+    nullptr, // vertical tracking wheel 2, set to nullptr as we are using IMEs
+    nullptr, // horizontal tracking wheel 1
+    nullptr, // horizontal tracking wheel 2, set to nullptr as we don't have a second one
+    &imu // inertial sensor
 );
 lemlib::Chassis chassis(drivetrain, linearController, angularController, sensors);
 
@@ -91,12 +94,13 @@ pros::Motor intake(3);
 ASSET(test_txt)
 
 void autonomous() {
+    chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
+    chassis.moveToPose(0, 24, 0, 5000);
+    chassis.turnTo(-24, 60, 5000);
     intake = 127;
-    chassis.moveToPose(-26.984, 55.758, 315, 5000, {.maxSpeed = 127, .minSpeed = 80}, false);
-    chassis.moveToPose(8.623, 60, 270, 5000, {.forwards = false, .maxSpeed = 127, .minSpeed = 80}, false);
-    intake = 0;
-    chassis.moveToPose(-13, 27.5, 180, 5000, {.maxSpeed = 127, .minSpeed = 80}, false);
-    chassis.moveToPose(0, 0, 0, 5000, {.forwards = false, .maxSpeed = 127, .minSpeed = 80}, false);
+    chassis.moveToPose(-24, 60, -45, 5000, {.maxSpeed = 127, .minSpeed = 100}, false);
+    chassis.moveToPose(-24, 60, -90, 500, {.maxSpeed = 127, .minSpeed = 100}, false);
+    chassis.moveToPose(0, 60, -90, 5000, {.forwards = false, .maxSpeed = 127, .minSpeed = 100}, false);
 }
 
 void opcontrol() {
