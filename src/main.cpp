@@ -1,9 +1,11 @@
 #include "main.h"
+#include "bot.h"
 #include "lemlib/api.hpp"
 #include "lemlib/asset.hpp"
 #include "lemlib/chassis/chassis.hpp"
 #include "lemlib/chassis/trackingWheel.hpp"
 #include "lemlib/pose.hpp"
+#include "pros/misc.h"
 #include "pros/motors.h"
 #include "pros/motors.hpp"
 
@@ -89,21 +91,27 @@ void disabled() {}
 
 void competition_initialize() {}
 
-pros::Motor intake(3);
-
-ASSET(test_txt)
-
 void autonomous() {
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
-    chassis.moveToPose(0, 24, 0, 5000);
-    chassis.turnTo(-24, 60, 5000);
+    // close WP
     intake = 127;
-    chassis.moveToPose(-24, 60, -45, 5000, {.maxSpeed = 127, .minSpeed = 100}, false);
-    chassis.moveToPose(-24, 60, -90, 500, {.maxSpeed = 127, .minSpeed = 100}, false);
-    chassis.moveToPose(0, 60, -90, 5000, {.forwards = false, .maxSpeed = 127, .minSpeed = 100}, false);
+    chassis.moveToPose(12, 60, 0, 4000, {.maxSpeed = 127, .minSpeed = 127}, false);
+    chassis.moveToPose(12, 24, -135, 4000, {.forwards = false, .maxSpeed = 127, .minSpeed = 100}, false);
+    intake = 0;
+    chassis.moveToPose(-12, 12, 135, 4000, {.maxSpeed = 127, .minSpeed = 100}, false);
+    chassis.turnTo(0, 0, 500, true, 127, false);
+    right_wing.set_value(true);
+    chassis.moveToPose(0, 0, 45, 5000, {.maxSpeed = 127, .minSpeed = 100}, false);
+    chassis.turnTo(chassis.getPose().x+24, chassis.getPose().y+24, 500, true, 127, false);
+    right_wing.set_value(false);
+    intake = -127;
+    chassis.moveToPose(32, 0, 90, 4000, {.maxSpeed = 80, .minSpeed = 40}, false);
+    pros::delay(1000);
+    intake = 0;
 }
 
 void opcontrol() {
+    chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
     // controller
     // loop to continuously update motors
     while (true) {
@@ -112,6 +120,39 @@ void opcontrol() {
         int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
         // move the chassis with curvature drive
         chassis.curvature(leftY, rightX);
+
+        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
+            left_toggle = !left_toggle;
+            wings = left_toggle;
+            left_wing.set_value(left_toggle);
+        }
+        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y)) {
+            right_toggle = !right_toggle;
+            wings = right_toggle;
+            right_wing.set_value(right_toggle);
+        }
+        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
+            wings = !wings;
+            right_wing.set_value(wings);
+            left_wing.set_value(wings);
+        }
+
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
+            intake = 127;
+        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
+            intake = -127;
+        } else {
+            intake = 0;
+        }
+
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
+            hang = -127;
+        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
+            hang = 127;
+        } else {
+            hang = 0;
+        }
+
         // delay to save resources
         pros::delay(10);
     }
